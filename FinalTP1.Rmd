@@ -1,0 +1,535 @@
+---
+title: "TP1 Statistical Analysis and Document Mining"
+author: "Karim Mike Rahhal, Othman Bensellam, Gwendal Cachim-Bernard"
+output:
+  html_document:
+    df_print: paged
+    fig_caption: yes
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+
+```
+
+## Part1: Multiple linear regression on simulated data
+#### 1.
+```{r 1:}
+set.seed(0)
+nrows=6000
+ncols=201
+Data=data.frame(matrix(rnorm(nrows*ncols), nrow=nrows))
+head(Data)
+ 
+
+```
+#### 2.
+#### **Gaussian Regression Model:**
+$$
+Y = \beta_{0} \begin{bmatrix} 1 \\ 1 \\ \vdots \\  1 \end{bmatrix} + \sum_{i = 1}^{201}\beta_{i} X_{i} + \epsilon_{r}    \\
+Y=\begin{bmatrix} y_{1} \\ y_{2} \\ \vdots \\ y_{201} \end{bmatrix}
+$$ 
+
+$\epsilon_{r}$ is the error term that follows a multivariate normal distribution
+Y is the first column of the data ( predicted variable)
+
+#### **True Regression Model:**
+$$
+Y = \epsilon
+$$ 
+The true regression line is a realization from the true underlying statistical regression model. We never know the true regression line when working with real data. This is a population model. The estimated regression is our best guess using the ordinary least squares or maximum likelihood estimation technique. It is our best guess of the underlying population model.
+ 
+
+#### 3.
+
+```{r 3:}
+mod<-lm(Data)
+pvalues<-summary(mod)$coefficients[,4] 
+significant_variables = subset(pvalues,pvalues<=0.05)
+significant_variables
+```
+
+
+We want to perform the following test to check the significant Variables that correspond to the significant predictors
+$$
+\begin{cases} H_{0}: (\beta_{j})_{1,...201}=0 \\ \\ H_{1}: (\beta_{j})_{1,...201} \neq 0 \end{cases}
+ $$
+
+
+ 
+After checking the p-values for all the predictors We concluded that their are 9 coefficients assessed as significantly not zero (they correspond to **significant variables**) as having their p-value <= 0.05  which leads to a **rejection** in the **null hypothesis**.
+\
+So we can see that some predictors seems correlated with the output but it is because of the important number of predictors. In fact, we saw before that no predictors were correlated with the output because we randomly created every data without any correlation. The lesson to get from that is that doing models with a lot of predictors will get us some correlation but we should be aware that it is maybe not really correlated. So we should always verify and ask us the right questions about the reasons of the correlations
+
+#### 4.
+
+```{r 5A:}
+x1=rnorm(1000)
+eps2=rnorm(1000)
+x2=3*x1 + eps2
+eps3=rnorm(1000)
+deux=rep(2,1000)
+y= x2 + x1 + deux + eps3
+
+
+
+```
+
+```{r figs,fig.cap="\\label{fig:1} As we Can see in Figure 1 the shape is linear and one of the reasons is as being linear in it's parameters."}
+plot(x1,x2, main="Figure 1-Cloud of Points of Simulated Values")
+
+```
+
+
+
+$$
+\begin{cases} X_{1}=\epsilon_{1} \\ \\X_{2}=3\epsilon_{1} + \epsilon_{2} \end{cases} 
+ $$ \
+ 
+\begin{equation} \tag{1}  \begin{bmatrix} X_{1} \\ X_{2} \\  \end{bmatrix} = \begin{bmatrix} 1  & 0 \\ 3 & 1 \\ \end{bmatrix}  \begin{bmatrix} \epsilon_{1} \\ \epsilon_{2} \\  \end{bmatrix} \end{equation} \
+
+If we denote the following Equation (1) by $X=A \epsilon$ then   $Cov(X)=A  Cov(\epsilon)  A^T = AA^T \sigma^2$ \
+So, $Cov(X)= \begin{bmatrix} 1  & 3 \\ 3 & 10 \\ \end{bmatrix} \sigma^2 = C$  \
+$Var(X_{1})= \sigma^2$ \ \
+$Var(X_{2})= 10\sigma^2$ \
+
+ 
+**Joint distribution** of ($X_{1,i}$,$X_{2,i}$) follows the Normal distribution with mean  $\begin{bmatrix} 0 \\ 0 \\  \end{bmatrix}$ and CoVariance matrix C.
+\
+
+#### 5.
+```{r 5:}
+Model1<-lm(formula=y~x1)
+Model2<-lm(formula=y~x2)
+summary(Model1)
+summary(Model2)
+(summary(Model1)$sigma)**2 # value of sigma^2 of Model1
+(summary(Model2)$sigma)**2 # value of sigma^2 of Model2
+
+
+
+```
+
+
+##### If we write $Y_{i}$ in terms of $X_{1,i}$ we will have this equation: \begin{equation} \tag{2} Y_{i}=2+4X_{1,i} + \epsilon_{2,i} + \epsilon_{3,i}  \end{equation}
+##### If we write $Y_{i}$ in terms of $X_{2,i}$ we will have this equation: \begin{equation} \tag{3} Y_{i}=2+\frac{4}{3}X_{2,i} - \epsilon_{2,i} + \epsilon_{3,i}   \end{equation}
+
+If we compared **Equation (2)** to the equation of Model 1 we can see that $\beta_{1}$=4 and $\beta_{0}$=2, similarly we can compare **Equation (2)** to the equation of Model 2 and we can see that $\beta_{2}$=$\frac{4}{3}$ and $\beta_{0}$=2. The results were expected and $\beta_{1}=4.05262$ from summary Model 1 is close to value of $\beta_{1}$ of the true model which is 4. $\beta_{2}=1.29629$ of model 2 is close to the value of $\beta_{2}$ of the true model which is $\frac{4}{3}$. \ \
+From  Equation (2) we can deduce that $\hat{\epsilon_{1}}$ follows a Normal distribution with mean 0 and variance 2. \ \
+From  Equation (3) we can deduce that $\hat{\epsilon_{2}}$ follows a Normal distribution with mean 0 and variance $\frac{4}{3}$. \ \
+We can see that  $\sigma^2$ of the truel model are close to that of the Models¬1 (1.99) and Model¬2(1.09).
+```{r 5b:}
+set.seed(3)
+x1=rnorm(10)
+eps2=rnorm(10)
+x2=3*x1 + eps2
+eps3=rnorm(10)
+deaux=rep(2,10)
+y= x2 + x1 + deaux + eps3
+Model1A<-lm(formula=y~x1)
+Model2B<-lm(formula=y~x2)
+summary(Model1A)
+summary(Model2B)
+(summary(Model1A)$sigma)**2
+(summary(Model2B)$sigma)**2
+```
+```{r fig,fig.cap="\\label{fig:2}  Figure 2 represents values of $x2$ calculated with the new seed by the new values of $x1$. There is only 10 values, but we can still see that the shape is linear."}
+plot(x1,x2, main="Figure 2-Cloud of Points of Simulated Values")
+
+``` 
+
+*  In addition to that we Can see the value of  $\beta_{0}$ decreased in Both models due to the decrease in the number of points, but the value of $\beta_{1}$=4.0861 of Model 1 resulted in a slight increase and similarly the value of $\beta_{2}$=1.4239 also resulted in a slight increase. 
+
+*  What we can conclude about the loss of precision is the size of the dataset should not be too small. Without enough data, the parameters will not be enough precise and will be more influenced by extreme cases.
+\
+
+#### 6.
+```{r 6:}
+ModelA<-lm(formula=y~x1+x2)
+summary(ModelA)
+
+```
+
+
+
+
+As we can from the summary of the regression model, the values are: $\beta_{0}$=1.5812, $\beta_{1}$=2.0628, and $\beta_{2}$=0.7336.  \
+We can look at the value of F-statistic which is 65.63. It follows the Fisher distribution $F_{\alpha}(p-1,n-p)$= $F_{0.05}(1,8)$ which is 5.32 from the fisher distribution table. We can say that F-observed > $F_{0.05}(1,8)$ so we reject the null hypothesis $H_{0}$ meaning that the 2 variables are significant together. 
+$$
+\begin{cases} H_{0}: \beta_{1}=\beta_{2}=0 \\ \\ H_{1}: 	\exists \beta \neq 0 \end{cases}
+ $$
+
+
+
+
+
+
+
+
+## 1. Preliminary Analysis of the data
+## (a)
+```{r part:1}
+prostateCancer<-read.table("./prostate.data", header=TRUE)
+head(prostateCancer)
+attach(prostateCancer)
+colnames(prostateCancer)
+pro=data.frame(lcavol,lweight,age,lbph,svi,lcp,gleason,pgg45,lpsa,train)
+pro=pro[,-10]
+head(pro)
+```
+
+
+## (b)
+```{r}
+pairs(pro)
+round(cor(pro), digits=2)
+```
+According to the graph of pairs command, the cloud of point that resemble more a line means that their are more correlation between the points. So,Based on the Correlation matrix and the scatter plots from pairs, we can see that _lcavol_ and _lcp_ are correlated with a positive correlation. In addition to that, _lcavol_ and _lpsa_ also have a strong positive correlation. Finally, _lcavol_ and _svi_ have a weak positive correlation.
+
+
+
+## 2. Linear Regression
+## (a)
+```{r part:2}
+prostateCancer$gleason<-factor(prostateCancer$gleason)
+prostateCancer$svi<-factor(prostateCancer$svi)
+class(prostateCancer$gleason)
+class(prostateCancer$svi)
+model<- lm(formula= lcavol ~ lweight + age + lbph + prostateCancer$svi + lcp + prostateCancer$gleason + pgg45 + lpsa, data=pro)
+summary(model)
+
+```
+To build the multiple linear regression model we used the lcavol as the dependent variable and the rest as independent variables and here is the equation of the model:
+$$ Y =\beta_{0}+  \beta_{1}X_{lweight} + \beta_{2}X_{age}+ \beta_{3}X_{lbph}+ \beta_{4}X_{svi1}+ \beta_{5}X_{lcp}+ \beta_{6}X_{gleason7}+ \beta_{7}X_{gleason8}+ \beta_{8}X_{gleason9}+ \beta_{9}X_{pgg45} + \beta_{10}X_{lpsa} + \epsilon_{r} \\ $$
+
+* The regression coefficients starting with gleason are dummy variables that indicates if the value is 7 (in the case of gleason7, but 8 and 9 for respectively gleason8 and gleason9) or something else. So the result is either 1 if it's the value, either 0 if it is not. It is the same about svi1 that checks if the value of svi is 1.
+* The results of the linear regression shows us that lcp and lpsa seems to be the only two parameters significant for lcavol (We can see that age and pgg45 seems correlated too, but there estimates are very small so they are not very significant).
+
+## (b)
+```{r part:2b}
+confint(model, level=0.95)
+
+```
+Based on the results seen above and doing an hypothesis testing on each variable we can conclude that lweight, lbph, svi(factor), pgg45, and the 3 gleason dummy variables are not significant variables since the value 0 belongs to the confidence interval.
+
+## (c)
+\
+We want to perform the following test to check if **lpsa variable is significant or not**.
+$$
+\begin{cases} H_{0}: \beta_{10}=0 \\ \\ H_{1}: \beta_{10} \neq 0 \end{cases}
+ $$
+If we looked at the **p-value** of the lpsa variable, we can see that it is very small <(0.05) so we reject $H_{0}$ which means that this variable is significant. This coincides with the confidence interval, as the confidence interval of lpsa is [0.37,0.72] and 0 doesn't belong to this interval so we reject the null hypothesis meaning that lpsa variable is significant.
+
+## (d)
+A predicted value is calculated from the equation of the model, where the \beta values come from statistical software and the x-values are specified by us.
+
+```{r part:2c}
+predictedlcavol<-predict(model,pro)
+head(predictedlcavol) # predicted values of lcavol
+```
+
+```{r figl,fig.cap="\\label{fig:3} Figure 3 represents the comparison of the values of the prediction of lcavol against the true ones. So each point represent a value of lcavol by it prediction. we Can see also that we have a shape close to a line which means that this model is good-fit model for this data."}
+library(ggplot2)
+ggplot(pro, aes(x=predictedlcavol, y= lcavol)) +geom_point() +geom_abline(intercept=0, slope=1) +labs(x='Predicted Values', y='Actual Values', title='Figure 3-Predicted vs. Actual Values')
+
+```
+```{r part: 2cc}
+residualss<- lcavol - predictedlcavol # error ( true values- predicted values)
+head(residualss)
+```
+
+```{r figf,fig.cap="\\label{fig:2}  This figure represents the histogram of the residuals between lcavol and it's prediction. we Can see in Histrogram of Residuals that we can have a bell-formed shape which means that Residuals are very close to have a normall distribution."}
+hist(residualss, col=2)
+```
+
+```{r part:2ccc}
+a=shapiro.test(residualss)
+a
+SSW<-deviance(model) # residual sum of squares summation of (ei^2)
+SSW
+R<-summary(model)$r.squared #it is close to 1, our model is a good fit for the data but it can be improved more.
+R
+models<- lm(formula= lcavol ~ lweight + age + lbph + prostateCancer$svi + prostateCancer$gleason + pgg45, data=pro)
+summary(models)
+summary(models)$r.squared # not better than the first model and it was expected because lpsa and lcp are significant variables
+
+```
+To check if the residuals follow a normal distribution we did the shapiro test which is:
+$$
+\begin{cases} H_{0}: Normally \ Distributed  \\ \\ H_{1}: Not \ Normally \ Distribued \end{cases}
+ $$
+We can see that $p-value = 0.705$ which is greater than 0.05, then we fail to reject $H_{0}$, so they are normally distributed. 
+
+
+## (e) 
+If we looked at the value of $R^2$ we can see that it is 0.6864 and it is not too close to the value 1 but our model is good-fit model.
+\
+
+
+## (f)
+If we removed the predictors lpsa and lcp and we look at the value of $R^2$ we can see that it decreased to 0.4327 so the new model  doesn't fit well the data and this was expected because the variables lpsa and lcp are significant.
+
+## Best Subset selection
+## (a)
+The goal of this section is to find the number of predictors that give us the lowest residual error. We will start by investigating some of the models with different number of predictors.
+```{r part: 3a}
+#defining 3 different models
+head(prostateCancer)
+modelA<-lm(lcavol ~1,prostateCancer)
+modelB<-lm(lcavol ~., prostateCancer[,c(1,4,9)])
+modelC<-lm(lcavol ~., prostateCancer[,c(1,2,9)])
+summary(modelA)
+summary(modelB)
+summary(modelC)
+deviance(modelA)
+deviance(modelB)
+deviance(modelC)
+resid0=sum(modelA$residuals^2); resid0
+```
+* Model A represents a linear regression model without predictors, where the dependent variable is lcavol and value of $\beta_{0}$=1.35.
+* Model B represents a multiple linear regression model where the dependent variable is lcavol and the independent variables are _lbph_ and _lpsa_ with predictors $\beta_{0}$=-0.549 $\beta_{1}$=-0.08791  $\beta_{2}$=0.76979.
+* Model C represents a multiple linear regression model where the dependent variable is lcavol and the independent variables are _lweight_ and _lpsa_ with predictors $\beta_{0}$=-0.09570 $\beta_{1}$=-0.12781    $\beta_{2}$=0.77047.
+\
+
+Model A is using no predictors, the value of y predicted will be naturally just the mean of y, and we see that the residual is very high compared to a residual using only 2 predictors which make sense because the RSS decreases when we use more predictors because we have more information on the model. We also remark that Model B gives lower RSS than C.
+
+## (b)
+\
+We want to find the optimal model for each k using the RSS, we will start by computing the residual error for all models containing exactly two predictors(k = 2) and choose the one who has the minimal error.
+```{r}
+resid1 <- rep(0,28)
+counter = 1
+for (i in 2:8){
+  for (j in (i+1):9){
+    Model1<-lm(lcavol~ pro[,i]+pro[,j])
+    resid1[counter] = sum(Model1$residuals^2)
+    counter = counter + 1
+  }
+}
+resid1 # residual sum for all possible models of K=2
+index1 = which.min(resid1);index1    # i=6 and j=9
+```
+
+So we found out that the best selection model is the model with **lcp** and **lpsa** as independent variables.
+
+
+
+
+
+
+
+
+
+
+
+
+
+## (c)
+\
+Here, we do the same thing as before but for k ranging from 0 to 8
+```{r}
+resi = rep(0,9)
+optimal = list()
+model<-lm(lcavol ~1,pro)
+resi[1] = sum(model$residuals^2)
+for (k in 1 : 8){
+  # We take all the combinations of k in 8
+  a = combn(8,k,simplify = TRUE) + 1 # we add 1 to take only the predictor variables
+  # minimum of RSS for k predictors
+  min = 2^10
+  # we create list of indexes of the linear regression columns
+  for (i in 1:ncol(a)){
+    combination = a[,i]
+    q = rep(1,k+1)
+    for (j in 1 : k){
+      q[j+1] = combination[j]
+    }
+    model = lm(lcavol ~ .,data = pro[q])
+    error = sum(model$residuals^2)
+    # Here, we save the minimal error and the indexes that satisfy it
+    if (error < min){
+      min = error;
+      resi[k+1] = min
+      best = combination
+    }
+  }
+  optimal[[k]] = best
+  cat('The best predictors for k = ',k,'are : ',colnames(pro[best]),',and the error associated is ',min,'\n')
+ 
+}
+# predictors = rep(0,9)
+# for (i in 0:8){
+#   predictors[i+1] = i
+# }
+a = unlist(optimal[2])
+a
+```
+
+```{r figd,fig.cap="\\label{fig:4}  Figure 4 represents the number of predictors used with the least error for all models having K predictors, we Can see that as the number of predictors is icreasing the error is decreasing which makes sense because we’re adding more information to our model so it will become more accurate. But this creates a limitation when wanting to choose the best model."}
+
+plot(predictors,resi,  type='b', xlab="Number of predictors", ylab="Error", main="Figure 4-Residual sum of squares Vs. K", axes=TRUE, col="red")
+```
+\
+
+## (d)
+The best subset selection method can be used only to compare and choose best model for each value of K, so at the end we will have the best predictors that correspond to the best variables for each value of K. Moreover, To choose the best model among the best predictors for each value of K, we need to use the split-Validation method because we need to compare models with different number of predictors and the residual error is only good when comparing models with the same number of predictors. So we will try to perform a cross validation on our models that we found in the next section. 
+
+## Split Validation
+## (a)
+It involves randomly dividing the available set of observations into two parts, a training set and a validation set or hold-out set. The validation set hold-out set model is fit on the training set, and the fitted model is used to predict the responses for the observations in the validation set. The resulting validation set error rate—typically assessed using MSE in the case of a quantitative response—provides an estimate of the test error rate.So, in Case of Split Validation, we have different issues than best subset selection, where in this method we can select the best model used for different number of predictors. Finally, both test error and training error analysis will help us to determine the best model for our data. \ \
+
+In this example, we choose the validation set to be the data lines which index is multiples of 3, and the training set will be the rest. Here we define the indexes of both sets(true for validation set and false value for training set).
+
+```{r}
+# create matrix of validation set where it is the line for which the index is a multiple of 3
+valid <- 1:nrow(pro) %% 3 == 0
+valid
+# nrow(pro[!valid,])
+
+
+```
+
+## (b)
+```{r}
+# We train the training set data using the two optimal predictors found previously in the subset selection. We use the data that's not in the validation set.
+i = 6
+j = 9
+model = lm(lcavol ~., data=pro[!valid, c(1,i, j)])
+summary(model) 
+cat("The residual sum of the data is : \n")
+sum(model$residuals**2)
+
+variance = function(fit, validation=F) {
+  if (validation) {
+    l = var(predict.lm(fit, pro[!!valid, ]) - pro[!!valid, 1])
+  }
+  else {
+    l = var(predict.lm(fit, pro[!valid, ]) - pro[!valid, 1])
+  }
+  l
+}
+cat("The variance of residuals for training set is: \n")
+variance(model)
+cat("The variance of residuals for validation set is: \n")
+variance(model, validation = TRUE)
+
+```
+In this model we are performing a multiple linear regression on the dependent variable lcavol using the independent variables lcp and lpsa where the data is not the valid one (not multiples of 3).
+
+## (c)
+```{r}
+# calculate the fitting parameters of the training set and then fit them in the validation
+predicted = predict(model, newdata = pro[valid,c(1,i,j)]) 
+cat("The test error is : \n")
+sum((predicted - pro[valid,c(1)])**2)  # error of validation set
+
+```
+
+```{r}
+# defininig the indexes of the two best predictors
+a = unlist(optimal[2])
+a
+i = a[1]
+j = a[2]
+# traninig the model on training set
+model = lm(lcavol ~., data=pro[!valid, c(1,i, j)])
+# computing training error
+cat("The mean training error of the model : \n")
+sum(model$residuals**2)/nrow(pro[!valid,])
+
+# computing test error
+predicted = predict(model, newdata = pro[valid,c(1,i,j)]) 
+cat("The mean test error is : \n")
+sum((predicted - pro[valid,c(1)])**2)/nrow(pro[valid,])
+```
+## (d)
+```{r}
+N = length(pro[,1])
+valid = (1:N %% 3) == 0
+
+M = 7    # the rest of the best subset models
+error_training = 0:M
+error_valid = 0:M
+model = lm(lcavol ~ 1, pro[!valid, ])  
+
+
+error_training[1] = variance(model)
+error_valid[1] = variance(model, T)
+best_indexes = 1:M
+
+for (k in 1:(M+1)) {
+  combinations = combn(1:(M+1),k)
+  best_val = Inf
+  best_ind = 1
+  for (i in 1:length(combinations[1,])) {
+    model = lm(formula = lcavol ~ ., pro[!valid,append(c(1),combinations[,i]+1)])
+    if (variance(model) < best_val) {
+      best_val = variance(model)
+      best_ind = i
+    }
+  }
+  best_indexes[k] = best_ind
+  error_training[k] = best_val
+  model = lm(formula = lcavol ~ ., pro[!valid,append(c(1),combinations[,best_ind]+1)])
+  error_valid[k] = variance(model, T)
+}
+
+plot(1:(M+1), error_training, col="red", type = "b",main ="Figure 5-Error as a function of model size (nonrandom validation)",ylab = "Variance of residuals", xlab = "Number of predictors", ylim=c(0.2, 1.2))
+lines(1:(M+1), error_valid, type = "b",col="blue")
+legend("topright", c("training","validation"), fill=c("red","blue"))
+
+```
+```{r}
+#valid = (1:N %% 3) == 0
+for (i in 1:N) {valid[i] = F} ## chaning the valid set other than multiples of 3
+valid[sample(N, N/4)] = T
+
+M = 7    
+error_training = 0:M
+error_valid = 0:M
+model = lm(lcavol ~ 1, pro[!valid, ])  
+
+
+error_training[1] = variance(model)
+error_valid[1] = variance(model, T)
+best_indexes = 1:M
+
+for (k in 1:(M+1)) {
+  combinations = combn(1:(M+1),k)
+  best_val = Inf
+  best_ind = 1
+  for (i in 1:length(combinations[1,])) {
+    model = lm(formula = lcavol ~ ., pro[!valid,append(c(1),combinations[,i]+1)])
+    if (variance(model) < best_val) {
+      best_val = variance(model)
+      best_ind = i
+    }
+  }
+  best_indexes[k] = best_ind
+  error_training[k] = best_val
+  model = lm(formula = lcavol ~ ., pro[!valid,append(c(1),combinations[,best_ind]+1)])
+  error_valid[k] = variance(model, T)
+}
+
+```
+
+
+
+```{r fige,fig.cap="\\label{fig:4}"}
+plot(1:(M+1), error_training, col="red", type = "b",main ="Figure 6-Error as a function of model size (nonrandom validation)",ylab = "Variance of residuals", xlab = "Number of predictors", ylim=c(0.2, 1.2))
+lines(1:(M+1), error_valid, type = "b",col="blue")
+legend("topright", c("training","validation"), fill=c("red","blue"))
+```
+## (e)
+The main limitation in regards to model selection through cross-vslidation is extra training that needs to happen, Sometimes it can cause the training data to be too small for a representative sample. So, it's based on the **Selection Bias** and this is seen in Figures 5 and 6 where we have different selection of Validation which leads to an interpretation difference.
+
+## Conclussion
+As we can see in both Figures 5 & 6 that the training error keeps decreasing as the number of predictors increases, while the validation error has some minimum error at K=2 in Figure 5. So the best model selected is the model having _lcp_ and _lpsa_ (K=2) as independent variables.
+
+```{r}
+bestmodel<-lm(lcavol~lcp+lpsa,data=pro)
+summary(bestmodel)
+```
+As we can see the p-values for lcp and lpsa are <0.05 so if we apply an hypothesis testing we will be in favor of $H_{1}$ where each variable will be not 0 which means that they are significant variables and this coincides with our conclussion.
+
+
